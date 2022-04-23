@@ -12,6 +12,7 @@ class Favorite extends Model
     protected $fillable = [
         'user_id',
         'title',
-        'notice_id'
+        'notice_id',
+        'url'
     ];
 }

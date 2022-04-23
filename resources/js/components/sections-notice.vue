@@ -1,13 +1,14 @@
 <template>
 <div class="noticeSection">
     <div class="title">
-        <p>Noticias Nuevas</p>
+        <h4>Noticias Nuevas</h4>
     </div>
     
-    <div class="cardNotice" v-for="item in records" :key="item.id">
+    <div class="cardNotice" v-for="item in records.slice(0, 15)" :key="item.id">
         <div class="test">
             <p>{{item.title}}</p>
-            <a v-on:click=addFavorite(item.id,item.title) type="button" class="btn btn-dark">Añadir a Favoritos</a>
+            <a class="url" :href="item.url" target="_blank">Link</a>
+            <a v-on:click=addFavorite(item.id,item.title,item.url) type="button" class="btn btn-dark">Añadir a Favoritos</a>
         </div>
     </div>
     
@@ -23,7 +24,6 @@ import axios from "axios";
     export default {
         created(){
             this.getNotice()
-            console.log(this.records)
         },
         
         data(){
@@ -35,14 +35,14 @@ import axios from "axios";
             getNotice(){
                 axios.get(`https://hacker-news.firebaseio.com/v0/newstories.json?print=pretty`)
                 .then((res)=>{
-                    //console.log(res.data);
                     res.data.forEach(element => {
                         axios.get(`https://hacker-news.firebaseio.com/v0/item/${element}.json?print=pretty`)
                         .then((res)=>{
-                            //console.log(res);
+                            //console.log(res.data);
                             let notice = {
                                 title:res.data.title,
-                                id:res.data.id
+                                id:res.data.id,
+                                url:res.data.url
                                 }
                             return this.records.push(notice)
                         })
@@ -52,15 +52,15 @@ import axios from "axios";
                     console.log(e);
                 });
             },
-            addFavorite(id,title){
+            addFavorite(id,title,url){
                 axios.post(`/addOrRemoveFavorite`,{
                     notice_id:id,
                     title:title,
-                    user_id:1
+                    user_email:this.$cookie.get('Kickoff'),
+                    url:url
                 }).then((res)=>{
                     let message = "The news:" + title +" " + res.data.success
                     alert(message)
-                    console.log(title,res.data.success);
                 }).catch((e)=>{
                     console.log(e);
                 })
@@ -69,9 +69,7 @@ import axios from "axios";
     }
 </script>
 <style>
-.noticeSection{
-    background-color: grey;
-}
+
 .cardNotice{
     background-color: aqua;
     width: 100%;
@@ -83,9 +81,12 @@ import axios from "axios";
     margin-left: 10px;
     margin-bottom: 1rem;
     justify-content: center;
-
 }
 .title{
     text-align: center;
+}
+.url{
+    background: grey;
+    border-radius: 10%;
 }
 </style>

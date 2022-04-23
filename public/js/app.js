@@ -2167,6 +2167,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 //
 //
 //
@@ -2187,10 +2189,33 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  mounted: function mounted() {
-    console.log("Component mounted.");
-  }
+  data: function data() {
+    return {
+      session: 0
+    };
+  },
+  created: function created() {
+    if (this.$cookie.get('Kickoff')) {
+      this.session = 1;
+    }
+  },
+  methods: {
+    logOut: function logOut() {
+      this.$cookie["delete"]('Kickoff');
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/logout').then(function () {
+        return location.href = '/home';
+      });
+    }
+  },
+  mounted: function mounted() {}
 });
 
 /***/ }),
@@ -2231,6 +2256,7 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   data: function data() {
@@ -2241,14 +2267,18 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     login: function login() {
-      try {
-        axios__WEBPACK_IMPORTED_MODULE_0___default().post("/login", {
-          email: this.email,
-          password: this.password
-        });
-      } catch (e) {
-        return console.log(e);
-      }
+      var _this = this;
+
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post("/login", {
+        email: this.email,
+        password: this.password
+      }).then(function (res) {
+        _this.$cookie.set('Kickoff', _this.email, 1);
+
+        return window.location.replace("/home");
+      })["catch"](function (error) {
+        console.log(error);
+      });
     }
   }
 });
@@ -2334,15 +2364,19 @@ __webpack_require__.r(__webpack_exports__);
   },
   methods: {
     register: function register() {
+      var _this = this;
+
       if (this.password != this.password_confirmation) {
-        return console.log("Las contraseñas no coinciden");
+        alert("Las contraseñas no coinciden");
       }
 
       axios__WEBPACK_IMPORTED_MODULE_0___default().post("/register", {
         name: this.username,
         email: this.email,
         password: this.password
-      }).then(function (res) {
+      }).then(function () {
+        _this.$cookie.set('Kickoff', _this.email, 1);
+
         return window.location.href = '/home';
       })["catch"](function (error) {
         console.log(error.message);
@@ -2384,10 +2418,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   created: function created() {
-    this.getNotice(); //console.log(this.records)
+    this.getNotice();
   },
   data: function data() {
     return {
@@ -2398,12 +2437,15 @@ __webpack_require__.r(__webpack_exports__);
     getNotice: function getNotice() {
       var _this = this;
 
-      var user_id = 1;
-      axios__WEBPACK_IMPORTED_MODULE_0___default().get("/allFavoritesNotice/".concat(user_id)).then(function (res) {
+      var user_email = this.$cookie.get('Kickoff');
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post("/allFavoritesNotice", {
+        user_email: user_email
+      }).then(function (res) {
         res.data.forEach(function (element) {
           var notice = {
             title: element.title,
-            id: element.notice_id
+            id: element.notice_id,
+            url: element.url
           };
           return _this.records.push(notice);
         });
@@ -2417,15 +2459,13 @@ __webpack_require__.r(__webpack_exports__);
       axios__WEBPACK_IMPORTED_MODULE_0___default().post("/addOrRemoveFavorite", {
         notice_id: id,
         title: title,
-        user_id: 1
+        user_email: this.$cookie.get('Kickoff')
       }).then(function (res) {
         var message = "The news:" + title + " " + res.data.success;
         alert(message);
         _this2.records = [];
 
         _this2.getNotice();
-
-        console.log(title, res.data.success);
       })["catch"](function (e) {
         console.log(e);
       });
@@ -2466,11 +2506,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   created: function created() {
     this.getNotice();
-    console.log(this.records);
   },
   data: function data() {
     return {
@@ -2482,13 +2522,13 @@ __webpack_require__.r(__webpack_exports__);
       var _this = this;
 
       axios__WEBPACK_IMPORTED_MODULE_0___default().get("https://hacker-news.firebaseio.com/v0/newstories.json?print=pretty").then(function (res) {
-        //console.log(res.data);
         res.data.forEach(function (element) {
           axios__WEBPACK_IMPORTED_MODULE_0___default().get("https://hacker-news.firebaseio.com/v0/item/".concat(element, ".json?print=pretty")).then(function (res) {
-            //console.log(res);
+            //console.log(res.data);
             var notice = {
               title: res.data.title,
-              id: res.data.id
+              id: res.data.id,
+              url: res.data.url
             };
             return _this.records.push(notice);
           });
@@ -2497,15 +2537,15 @@ __webpack_require__.r(__webpack_exports__);
         console.log(e);
       });
     },
-    addFavorite: function addFavorite(id, title) {
+    addFavorite: function addFavorite(id, title, url) {
       axios__WEBPACK_IMPORTED_MODULE_0___default().post("/addOrRemoveFavorite", {
         notice_id: id,
         title: title,
-        user_id: 1
+        user_email: this.$cookie.get('Kickoff'),
+        url: url
       }).then(function (res) {
         var message = "The news:" + title + " " + res.data.success;
         alert(message);
-        console.log(title, res.data.success);
       })["catch"](function (e) {
         console.log(e);
       });
@@ -2535,7 +2575,10 @@ __webpack_require__.r(__webpack_exports__);
  */
 //require('./bootstrap');
 
- // Import Bootstrap an BootstrapVue CSS files (order is important)
+
+
+var VueCookie = __webpack_require__(/*! vue-cookie */ "./node_modules/vue-cookie/src/vue-cookie.js"); // Import Bootstrap an BootstrapVue CSS files (order is important)
+
 
 
  // Make BootstrapVue available throughout your project
@@ -2543,6 +2586,7 @@ __webpack_require__.r(__webpack_exports__);
 vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(bootstrap_vue__WEBPACK_IMPORTED_MODULE_3__.BootstrapVue); // Optionally install the BootstrapVue icon components plugin
 
 vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(bootstrap_vue__WEBPACK_IMPORTED_MODULE_4__.IconsPlugin);
+vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(VueCookie);
 /**
  * The following block of code may be used to automatically register your
  * Vue components. It will recursively scan this directory for the Vue
@@ -44899,7 +44943,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.main {\n  height: 10rem;\n}\n.btns{\n    text-align: right;\n    height: 3rem;\n}\n.btns a{\n    position: relative;\n    top: 50%;\n}\n.icon img{\n    position: absolute;\n    height: 50px;\n    width: 50px;\n}\n.icon h3{\n    position: absolute;\n    left: 3rem;\n    top: 1rem;\n}\n\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.main {\n  height: 7rem;\n}\n.btns{\n    text-align: right;\n    height: 3rem;\n}\n.btns a{\n    position: relative;\n    top: 50%;\n}\n.icon img{\n    position: absolute;\n    height: 50px;\n    width: 50px;\n}\n.icon h3{\n    position: absolute;\n    left: 3rem;\n    top: 1rem;\n}\na{\n  text-decoration: none;\n  color: black;\n}\na:hover {\n  color: black;\n}\n\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -44971,7 +45015,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.noticeSection{\r\n    background-color: grey;\n}\n.cardNotice{\r\n    background-color: aqua;\r\n    width: 100%;\r\n    display: inherit;\r\n    border: 1px solid gray;\r\n    border-radius: 5px;\r\n    text-align: center;\r\n    height: 5rem;\r\n    margin-left: 10px;\r\n    margin-bottom: 1rem;\r\n    justify-content: center;\n}\n.title{\r\n    text-align: center;\n}\r\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.cardNotice{\r\n    background-color: aqua;\r\n    width: 100%;\r\n    display: inherit;\r\n    border: 1px solid gray;\r\n    border-radius: 5px;\r\n    text-align: center;\r\n    height: 5rem;\r\n    margin-left: 10px;\r\n    margin-bottom: 1rem;\r\n    justify-content: center;\n}\n.title{\r\n    text-align: center;\n}\r\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -44995,7 +45039,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.noticeSection{\r\n    background-color: grey;\n}\n.cardNotice{\r\n    background-color: aqua;\r\n    width: 100%;\r\n    display: inherit;\r\n    border: 1px solid gray;\r\n    border-radius: 5px;\r\n    text-align: center;\r\n    height: 5rem;\r\n    margin-left: 10px;\r\n    margin-bottom: 1rem;\r\n    justify-content: center;\n}\n.title{\r\n    text-align: center;\n}\r\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.cardNotice{\r\n    background-color: aqua;\r\n    width: 100%;\r\n    display: inherit;\r\n    border: 1px solid gray;\r\n    border-radius: 5px;\r\n    text-align: center;\r\n    height: 5rem;\r\n    margin-left: 10px;\r\n    margin-bottom: 1rem;\r\n    justify-content: center;\n}\n.title{\r\n    text-align: center;\n}\n.url{\r\n    background: grey;\r\n    border-radius: 10%;\n}\r\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -49032,6 +49076,216 @@ module.exports = function (list, options) {
 
 /***/ }),
 
+/***/ "./node_modules/tiny-cookie/tiny-cookie.js":
+/*!*************************************************!*\
+  !*** ./node_modules/tiny-cookie/tiny-cookie.js ***!
+  \*************************************************/
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+ * tiny-cookie - A tiny cookie manipulation plugin
+ * https://github.com/Alex1990/tiny-cookie
+ * Under the MIT license | (c) Alex Chao
+ */
+
+!(function(root, factory) {
+
+  // Uses CommonJS, AMD or browser global to create a jQuery plugin.
+  // See: https://github.com/umdjs/umd
+  if (true) {
+    // Expose this plugin as an AMD module. Register an anonymous module.
+    !(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+		(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
+		__WEBPACK_AMD_DEFINE_FACTORY__),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+  } else {}
+
+}(this, function() {
+
+  'use strict';
+
+  // The public function which can get/set/remove cookie.
+  function Cookie(key, value, opts) {
+    if (value === void 0) {
+      return Cookie.get(key);
+    } else if (value === null) {
+      Cookie.remove(key);
+    } else {
+      Cookie.set(key, value, opts);
+    }
+  }
+
+  // Check if the cookie is enabled.
+  Cookie.enabled = function() {
+    var key = '__test_key';
+    var enabled;
+
+    document.cookie = key + '=1';
+    enabled = !!document.cookie;
+
+    if (enabled) Cookie.remove(key);
+
+    return enabled;
+  };
+
+  // Get the cookie value by the key.
+  Cookie.get = function(key, raw) {
+    if (typeof key !== 'string' || !key) return null;
+
+    key = '(?:^|; )' + escapeRe(key) + '(?:=([^;]*?))?(?:;|$)';
+
+    var reKey = new RegExp(key);
+    var res = reKey.exec(document.cookie);
+
+    return res !== null ? (raw ? res[1] : decodeURIComponent(res[1])) : null;
+  };
+
+  // Get the cookie's value without decoding.
+  Cookie.getRaw = function(key) {
+    return Cookie.get(key, true);
+  };
+
+  // Set a cookie.
+  Cookie.set = function(key, value, raw, opts) {
+    if (raw !== true) {
+      opts = raw;
+      raw = false;
+    }
+    opts = opts ? convert(opts) : convert({});
+    var cookie = key + '=' + (raw ? value : encodeURIComponent(value)) + opts;
+    document.cookie = cookie;
+  };
+
+  // Set a cookie without encoding the value.
+  Cookie.setRaw = function(key, value, opts) {
+    Cookie.set(key, value, true, opts);
+  };
+
+  // Remove a cookie by the specified key.
+  Cookie.remove = function(key) {
+    Cookie.set(key, 'a', { expires: new Date() });
+  };
+
+  // Helper function
+  // ---------------
+
+  // Escape special characters.
+  function escapeRe(str) {
+    return str.replace(/[.*+?^$|[\](){}\\-]/g, '\\$&');
+  }
+
+  // Convert an object to a cookie option string.
+  function convert(opts) {
+    var res = '';
+
+    for (var p in opts) {
+      if (opts.hasOwnProperty(p)) {
+
+        if (p === 'expires') {
+          var expires = opts[p];
+          if (typeof expires !== 'object') {
+            expires += typeof expires === 'number' ? 'D' : '';
+            expires = computeExpires(expires);
+          }
+          opts[p] = expires.toUTCString();
+        }
+
+        if (p === 'secure') {
+          if (opts[p]) {
+            res += ';' + p;
+          }
+
+          continue;
+        }
+
+        res += ';' + p + '=' + opts[p];
+      }
+    }
+
+    if (!opts.hasOwnProperty('path')) {
+      res += ';path=/';
+    }
+
+    return res;
+  }
+
+  // Return a future date by the given string.
+  function computeExpires(str) {
+    var expires = new Date();
+    var lastCh = str.charAt(str.length - 1);
+    var value = parseInt(str, 10);
+
+    switch (lastCh) {
+      case 'Y': expires.setFullYear(expires.getFullYear() + value); break;
+      case 'M': expires.setMonth(expires.getMonth() + value); break;
+      case 'D': expires.setDate(expires.getDate() + value); break;
+      case 'h': expires.setHours(expires.getHours() + value); break;
+      case 'm': expires.setMinutes(expires.getMinutes() + value); break;
+      case 's': expires.setSeconds(expires.getSeconds() + value); break;
+      default: expires = new Date(str);
+    }
+
+    return expires;
+  }
+
+  return Cookie;
+
+}));
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-cookie/src/vue-cookie.js":
+/*!***************************************************!*\
+  !*** ./node_modules/vue-cookie/src/vue-cookie.js ***!
+  \***************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+(function () {
+    Number.isInteger = Number.isInteger || function (value) {
+        return typeof value === 'number' &&
+            isFinite(value) &&
+            Math.floor(value) === value;
+    };
+    var Cookie = __webpack_require__(/*! tiny-cookie */ "./node_modules/tiny-cookie/tiny-cookie.js");
+
+    var VueCookie = {
+
+        install: function (Vue) {
+            Vue.prototype.$cookie = this;
+            Vue.cookie = this;
+        },
+        set: function (name, value, daysOrOptions) {
+            var opts = daysOrOptions;
+            if(Number.isInteger(daysOrOptions)) {
+                opts = {expires: daysOrOptions};
+            }
+            return Cookie.set(name, value, opts);
+        },
+
+        get: function (name) {
+            return Cookie.get(name);
+        },
+
+        delete: function (name, options) {
+            var opts = {expires: -1};
+            if(options !== undefined) {
+                opts = Object.assign(options, opts);
+            }
+            this.set(name, '', opts);
+        }
+    };
+
+    if (true) {
+        module.exports = VueCookie;
+    } else {}
+
+})();
+
+
+/***/ }),
+
 /***/ "./node_modules/vue-functional-data-merge/dist/lib.esm.js":
 /*!****************************************************************!*\
   !*** ./node_modules/vue-functional-data-merge/dist/lib.esm.js ***!
@@ -49500,37 +49754,59 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm._m(0)
+  return _c("div", { staticClass: "main" }, [
+    _c("div", { staticClass: "row justify-content-center" }, [
+      _c("div", { staticClass: "col-md-12" }, [
+        _c("div", { staticClass: "card" }, [
+          _vm._m(0),
+          _vm._v(" "),
+          _c("div", { staticClass: "btns" }, [
+            this.session == 0
+              ? _c("div", [
+                  _c("a", { attrs: { href: "/login" } }, [
+                    _vm._v("Iniciar Sesion"),
+                  ]),
+                  _vm._v(" "),
+                  _c("a", { attrs: { href: "/register" } }, [
+                    _vm._v("Registrarse"),
+                  ]),
+                ])
+              : _c("div", [
+                  _c("a", { attrs: { href: "/favoritos" } }, [
+                    _vm._v("Favoritos"),
+                  ]),
+                  _vm._v(" "),
+                  _c(
+                    "a",
+                    {
+                      attrs: { href: "#" },
+                      on: {
+                        click: function ($event) {
+                          return _vm.logOut()
+                        },
+                      },
+                    },
+                    [_vm._v("Cerrar sesion")]
+                  ),
+                ]),
+          ]),
+        ]),
+      ]),
+    ]),
+  ])
 }
 var staticRenderFns = [
   function () {
     var _vm = this
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
-    return _c("div", { staticClass: "main" }, [
-      _c("div", { staticClass: "row justify-content-center" }, [
-        _c("div", { staticClass: "col-md-8" }, [
-          _c("div", { staticClass: "card" }, [
-            _c("div", { staticClass: "icon" }, [
-              _c("img", {
-                attrs: {
-                  src: "https://kickoff.ar/img/logo.898137b2.svg",
-                  alt: "",
-                },
-              }),
-              _vm._v(" "),
-              _c("h3", [_vm._v("Challenge kickoff")]),
-            ]),
-            _vm._v(" "),
-            _c("div", { staticClass: "btns" }, [
-              _c("a", { attrs: { href: "#" } }, [_vm._v("Iniciar Sension")]),
-              _vm._v(" "),
-              _c("a", { attrs: { href: "#" } }, [_vm._v("Registrarse")]),
-              _vm._v(" "),
-              _c("a", { attrs: { href: "/favoritos" } }, [_vm._v("Favoritos")]),
-            ]),
-          ]),
-        ]),
+    return _c("div", { staticClass: "icon" }, [
+      _c("img", {
+        attrs: { src: "https://kickoff.ar/img/logo.898137b2.svg", alt: "" },
+      }),
+      _vm._v(" "),
+      _c("h3", [
+        _c("a", { attrs: { href: "/home" } }, [_vm._v("Challenge kickoff ")]),
       ]),
     ])
   },
@@ -49563,32 +49839,32 @@ var render = function () {
     _c("form", { staticClass: "form", attrs: { action: "#" } }, [
       _c("div", { staticClass: "accsection" }, [
         _c("div", { staticClass: "topwrap" }, [
-          _c("div", [
-            _c("input", {
-              directives: [
-                {
-                  name: "model",
-                  rawName: "v-model",
-                  value: _vm.email,
-                  expression: "email",
-                },
-              ],
-              staticClass: "form-control",
-              attrs: { type: "text", placeholder: "Email", name: "email" },
-              domProps: { value: _vm.email },
-              on: {
-                input: function ($event) {
-                  if ($event.target.composing) {
-                    return
-                  }
-                  _vm.email = $event.target.value
-                },
-              },
-            }),
-          ]),
-          _vm._v(" "),
           _c("div", { staticClass: "row" }, [
-            _c("div", { staticClass: "col-lg-6 col-md-6" }, [
+            _c("div", [
+              _c("input", {
+                directives: [
+                  {
+                    name: "model",
+                    rawName: "v-model",
+                    value: _vm.email,
+                    expression: "email",
+                  },
+                ],
+                staticClass: "form-control",
+                attrs: { type: "text", placeholder: "Email", name: "email" },
+                domProps: { value: _vm.email },
+                on: {
+                  input: function ($event) {
+                    if ($event.target.composing) {
+                      return
+                    }
+                    _vm.email = $event.target.value
+                  },
+                },
+              }),
+            ]),
+            _vm._v(" "),
+            _c("div", {}, [
               _c("input", {
                 directives: [
                   {
@@ -49827,27 +50103,38 @@ var render = function () {
     [
       _vm._m(0),
       _vm._v(" "),
-      _vm._l(_vm.records, function (item) {
-        return _c("div", { key: item.id, staticClass: "cardNotice" }, [
-          _c("div", { staticClass: "test" }, [
-            _c("p", [_vm._v(_vm._s(item.title))]),
-            _vm._v(" "),
-            _c(
-              "a",
-              {
-                staticClass: "btn btn-dark",
-                attrs: { type: "button" },
-                on: {
-                  click: function ($event) {
-                    return _vm.removeFavorite(item.id, item.title)
+      this.records.lenght == 0
+        ? _c("div", [_c("h3", [_vm._v("No tiene favoritos agregado")])])
+        : _vm._l(_vm.records, function (item) {
+            return _c("div", { key: item.id, staticClass: "cardNotice" }, [
+              _c("div", { staticClass: "test" }, [
+                _c("p", [_vm._v(_vm._s(item.title))]),
+                _vm._v(" "),
+                _c(
+                  "a",
+                  {
+                    staticClass: "url",
+                    attrs: { href: item.url, target: "_blank" },
                   },
-                },
-              },
-              [_vm._v("Remover Favorito")]
-            ),
-          ]),
-        ])
-      }),
+                  [_vm._v("Link")]
+                ),
+                _vm._v(" "),
+                _c(
+                  "a",
+                  {
+                    staticClass: "btn btn-dark",
+                    attrs: { type: "button" },
+                    on: {
+                      click: function ($event) {
+                        return _vm.removeFavorite(item.id, item.title, item.url)
+                      },
+                    },
+                  },
+                  [_vm._v("Remover Favorito")]
+                ),
+              ]),
+            ])
+          }),
     ],
     2
   )
@@ -49890,10 +50177,19 @@ var render = function () {
     [
       _vm._m(0),
       _vm._v(" "),
-      _vm._l(_vm.records, function (item) {
+      _vm._l(_vm.records.slice(0, 15), function (item) {
         return _c("div", { key: item.id, staticClass: "cardNotice" }, [
           _c("div", { staticClass: "test" }, [
             _c("p", [_vm._v(_vm._s(item.title))]),
+            _vm._v(" "),
+            _c(
+              "a",
+              {
+                staticClass: "url",
+                attrs: { href: item.url, target: "_blank" },
+              },
+              [_vm._v("Link")]
+            ),
             _vm._v(" "),
             _c(
               "a",
@@ -49902,7 +50198,7 @@ var render = function () {
                 attrs: { type: "button" },
                 on: {
                   click: function ($event) {
-                    return _vm.addFavorite(item.id, item.title)
+                    return _vm.addFavorite(item.id, item.title, item.url)
                   },
                 },
               },
@@ -49921,7 +50217,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("div", { staticClass: "title" }, [
-      _c("p", [_vm._v("Noticias Nuevas")]),
+      _c("h4", [_vm._v("Noticias Nuevas")]),
     ])
   },
 ]
@@ -62108,7 +62404,7 @@ Vue.compile = compileToFunctions;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;

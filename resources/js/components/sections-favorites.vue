@@ -3,11 +3,16 @@
     <div class="title">
         <p>Mis Noticias Favoritas</p>
     </div>
-    
-    <div class="cardNotice" v-for="item in records" :key="item.id">
+    <div v-if="this.records.lenght == 0">
+        <h3>No tiene favoritos agregado</h3>
+    </div>
+
+
+    <div v-else class="cardNotice"  v-for="item in records" :key="item.id">
         <div class="test">
             <p>{{item.title}}</p>
-            <a v-on:click=removeFavorite(item.id,item.title) type="button" class="btn btn-dark">Remover Favorito</a>
+            <a class="url" :href="item.url" target="_blank">Link</a>
+           <a v-on:click=removeFavorite(item.id,item.title,item.url)  type="button" class="btn btn-dark">Remover Favorito</a>
         </div>
     </div>
     
@@ -23,7 +28,6 @@ import axios from "axios";
     export default {
         created(){
             this.getNotice()
-            //console.log(this.records)
         },
         
         data(){
@@ -33,13 +37,16 @@ import axios from "axios";
         },
         methods:{
             getNotice(){
-                let user_id = 1
-                axios.get(`/allFavoritesNotice/${user_id}`)
+                let user_email = this.$cookie.get('Kickoff')
+                axios.post(`/allFavoritesNotice`,{
+                    user_email:user_email,
+                })
                 .then((res)=>{
                     res.data.forEach(element => {
                         let notice = {
                             title:element.title,
-                            id:element.notice_id
+                            id:element.notice_id,
+                            url:element.url
                             }
                         return this.records.push(notice)
                     });
@@ -52,13 +59,12 @@ import axios from "axios";
                 axios.post(`/addOrRemoveFavorite`,{
                     notice_id:id,
                     title:title,
-                    user_id:1
+                    user_email:this.$cookie.get('Kickoff')
                 }).then((res)=>{
                     let message = "The news:" + title +" " + res.data.success
                     alert(message)
                     this.records = []
                     this.getNotice();
-                    console.log(title,res.data.success);
                 }).catch((e)=>{
                     console.log(e);
                 })
@@ -67,9 +73,7 @@ import axios from "axios";
     }
 </script>
 <style>
-.noticeSection{
-    background-color: grey;
-}
+
 .cardNotice{
     background-color: aqua;
     width: 100%;

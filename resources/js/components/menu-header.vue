@@ -1,16 +1,22 @@
 <template>
   <div class="main">
     <div class="row justify-content-center">
-      <div class="col-md-8">
+      <div class="col-md-12">
         <div class="card">
             <div class="icon">
                 <img src="https://kickoff.ar/img/logo.898137b2.svg" alt="">
-                <h3>Challenge kickoff</h3>
+                <h3><a href="/home">Challenge kickoff </a> </h3>
             </div>
           <div class="btns">
-              <a class="" href="#">Iniciar Sension</a>
-              <a class="" href="#">Registrarse</a>
+              <div v-if="this.session == 0">
+              <a href="/login">Iniciar Sesion</a>
+              <a href="/register">Registrarse</a>
+              </div>
+
+              <div v-else>
               <a href="/favoritos">Favoritos</a>
+              <a href="#" v-on:click=logOut()>Cerrar sesion</a>
+              </div>
           </div>
         </div>
       </div>
@@ -20,16 +26,37 @@
 
 <script>
 
+import axios from "axios";
 
 export default {
-  mounted() {
-    console.log("Component mounted.");
+  
+  data(){
+    return{
+      session:0,
+    }
   },
+  created() {
+    if (this.$cookie.get('Kickoff')) {
+      this.session = 1;
+    }
+  },
+  
+    methods:{
+      logOut(){
+        this.$cookie.delete('Kickoff');
+        axios.post('/logout')
+        .then(() => location.href = '/home')
+      }
+      
+    },
+    mounted(){
+    }
+  
 };
 </script>
 <style>
 .main {
-  height: 10rem;
+  height: 7rem;
 }
 .btns{
     text-align: right;
@@ -48,6 +75,13 @@ export default {
     position: absolute;
     left: 3rem;
     top: 1rem;
+}
+a{
+  text-decoration: none;
+  color: black;
+}
+a:hover {
+  color: black;
 }
 
 </style>

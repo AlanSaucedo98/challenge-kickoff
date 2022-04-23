@@ -68,7 +68,7 @@ export default {
   methods: {
     register() {
       if (this.password != this.password_confirmation) {
-        return console.log("Las contraseñas no coinciden");
+       alert("Las contraseñas no coinciden");
       }
 
       axios
@@ -77,7 +77,8 @@ export default {
           email: this.email,
           password: this.password,
         })
-        .then(function (res) {
+        .then(() => {
+          this.$cookie.set('Kickoff', this.email,1);
           return window.location.href = '/home';
         })
         .catch(function (error) {

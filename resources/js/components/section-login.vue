@@ -4,12 +4,13 @@
     <form action="#" class="form">
         <div class="accsection">
             <div class="topwrap">
+              <div class="row">
                     <div>
                        <input v-model="email" type="text" placeholder="Email" class="form-control"  name="email">
                         
                     </div>
-                    <div class="row">
-                        <div class="col-lg-6 col-md-6">
+                    
+                        <div class="">
                              <input v-model="password" type="password" placeholder="password" class="form-control"  name="password">
                         </div>
                     </div>
@@ -34,14 +35,15 @@ import axios from "axios";
         },
         methods: {
              login () {
-                try {
                   axios.post(`/login`, {
                     email: this.email,
                     password:this.password
+                  }).then((res)=>{
+                    this.$cookie.set('Kickoff', this.email,1);
+                    return window.location.replace("/home");
+                  }).catch(error => {
+                    console.log(error);
                   });
-                } catch (e) {
-                  return console.log(e);
-                }
             },
         }       
     }
